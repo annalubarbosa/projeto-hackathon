@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mural Ao Vivo - Hackathon</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <style>
+        body { background-color: #22223b; color: #8ecae6; }
+        .card-msg { background-color: #eae0d5;  border-left: 5px solid #00b4d8; }
+    </style>
+</head>
+<body class="p-5">
+    <div class="container text-center">
+        <h1 class="mb-9 fw-bold">Mural Ao Vivo</h1>
+
+        <form id="formMensagem" class="d-flex justify-content-center mb-5 gap-3">
+            <input type="text" name="texto" id="texto" class="form-control w-50 bg-white text-white border-secondary" placeholder="Envie sua mensagem para o mural" required autocomplete="off">
+            <button type="submit" class="btn btn-warning fw-bold">Enviar</button>
+        </form>
+
+        <div id="mural" class="row justify-content-center gap-4 flex-column aling-item-center"></div>
+    </div>
+
+    <script>
+        const mural = document.getElementById("mural");
+        const form = document.getElementById("formMensagem");
+        const inputTexto = document.getElementById("texto");
+
+        // 1. Função que bate no PHP e traz as mensagens (READ)
+        function carregarMensagens() {
+            fetch('ler.php')
+                .then(resposta => resposta.json())
+                .then(dados => {
+                    mural.innerHTML = ''; // Limpa antes de desenhar
+
+                    dados.forEach(msg => {
+                        mural.innerHTML += `
+                            <div class="col-md-8 text-start p-3 rounded shadow card-msg w-75">
+                                <h5 class="m-0">${msg.texto}</h5>
+                                <small class="text-black opacity-20">Enviado às: ${msg.hora}</small>
+                            </div>
+                        `;
+                    });
+                })
+                .catch(erro => console.error("Erro ao buscar dados:", erro));
+        }
+
+        // 2. Intercepta o envio do formulário (CREATE)
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            let formData = new FormData();
+            formData.append('texto', inputTexto.value);
+
+            fetch('salvar.php', {
+                method: 'POST',
+                body: formData
+            }).then(() => {
+                inputTexto.value = '';
+                carregarMensagens();
+            })
+        });
+
+
+        // 3. Atualiza a cada 2s
+        setInterval(carregarMensagens, 2000);
+
+        // Inicia a primeira carga
+        carregarMensagens();
+    </script>
+</body>
+</html>
